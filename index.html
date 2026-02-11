@@ -1,1 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ZHSS Pass Issuer</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e17;--card:#111827;--card-border:#1e293b;--text:#f1f5f9;--text-muted:#94a3b8;--accent-active:#10b981;--accent-expired:#ef4444;--accent-pending:#f59e0b;--accent-blue:#3b82f6}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-50%;left:-50%;width:200%;height:200%;background:radial-gradient(ellipse at 30% 20%,rgba(16,185,129,0.04) 0%,transparent 50%),radial-gradient(ellipse at 70% 80%,rgba(59,130,246,0.03) 0%,transparent 50%);pointer-events:none;z-index:0}
+.admin-container{width:100%;max-width:560px;position:relative;z-index:1}
+.admin-header{text-align:center;margin-bottom:32px}
+.admin-logo{font-size:36px;margin-bottom:8px}
+.admin-title{font-size:24px;font-weight:800;letter-spacing:-0.02em}
+.admin-subtitle{font-family:'DM Mono',monospace;font-size:12px;color:var(--text-muted);letter-spacing:0.08em;text-transform:uppercase;margin-top:6px}
+.admin-card{background:var(--card);border:1px solid var(--card-border);border-radius:20px;overflow:hidden}
+.admin-section{padding:28px 32px;border-bottom:1px solid var(--card-border)}
+.admin-section:last-child{border-bottom:none}
+.section-title{font-family:'DM Mono',monospace;font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-muted);margin-bottom:18px;display:flex;align-items:center;gap:8px}
+.section-title span:first-child{font-size:14px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+.form-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:var(--text-muted)}
+.form-input,.form-select{padding:10px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;background:rgba(0,0,0,0.3);border:1.5px solid var(--card-border);border-radius:10px;color:var(--text);outline:none;transition:border-color 0.3s,box-shadow 0.3s}
+.form-input:focus,.form-select:focus{border-color:var(--accent-blue);box-shadow:0 0 0 3px rgba(59,130,246,0.15)}
+.form-input::placeholder{color:#475569}
+.form-select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;padding-right:32px}
+.form-select option{background:#1e293b;color:var(--text)}
+.generate-btn{width:100%;padding:14px 24px;border:none;border-radius:12px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;letter-spacing:0.02em;color:#fff;background:linear-gradient(135deg,#10b981,#3b82f6);transition:all 0.3s}
+.generate-btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(16,185,129,0.25)}
+.generate-btn:active{transform:scale(0.98)}
+.output-area{display:none;margin-top:20px}
+.output-area.show{display:block}
+.output-success{padding:20px;border-radius:12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);text-align:center;margin-bottom:16px}
+.output-success-icon{font-size:32px;margin-bottom:6px}
+.output-success-text{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent-active);letter-spacing:0.06em;text-transform:uppercase;font-weight:500}
+.output-passid{font-family:'DM Mono',monospace;font-size:10px;color:var(--text-muted);margin-top:6px;letter-spacing:0.04em}
+.output-link-box{display:flex;gap:8px;align-items:stretch}
+.output-link{flex:1;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;background:rgba(0,0,0,0.4);border:1.5px solid var(--card-border);border-radius:10px;color:var(--accent-blue);word-break:break-all;line-height:1.4;max-height:80px;overflow-y:auto}
+.copy-btn{padding:10px 16px;border:none;border-radius:10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;font-weight:500;background:#1e293b;color:var(--text-muted);transition:all 0.3s;white-space:nowrap;display:flex;align-items:center}
+.copy-btn:hover{background:#334155;color:var(--text)}
+.copy-btn.copied{background:rgba(16,185,129,0.15);color:var(--accent-active)}
+.output-preview-btn{width:100%;margin-top:10px;padding:10px 16px;border:1.5px solid var(--card-border);border-radius:10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;background:transparent;color:var(--text-muted);transition:all 0.3s;letter-spacing:0.04em}
+.output-preview-btn:hover{border-color:var(--accent-blue);color:var(--text)}
+.output-hint{font-size:12px;color:var(--text-muted);margin-top:14px;text-align:center;line-height:1.6}
+.output-hint strong{color:var(--text)}
 
+.history-header{display:flex;align-items:center;justify-content:space-between}
+.clear-btn{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.06em;color:#475569;background:none;border:1px solid #1e293b;border-radius:6px;padding:4px 10px;cursor:pointer;transition:all 0.3s;text-transform:uppercase}
+.clear-btn:hover{border-color:var(--accent-expired);color:var(--accent-expired)}
+.history-item{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04);gap:12px}
+.history-item:last-child{border-bottom:none}
+.history-info{flex:1;min-width:0}
+.history-class{font-weight:600;font-size:14px}
+.history-detail{font-family:'DM Mono',monospace;font-size:11px;color:var(--text-muted);margin-top:2px}
+.history-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.history-copy{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.04em;color:var(--text-muted);background:none;border:1px solid var(--card-border);border-radius:6px;padding:4px 8px;cursor:pointer;transition:all 0.3s}
+.history-copy:hover{border-color:var(--accent-blue);color:var(--accent-blue)}
+.history-copy.copied{border-color:var(--accent-active);color:var(--accent-active)}
+.history-status{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px;border-radius:100px;font-weight:500;flex-shrink:0}
+.history-status.pending{background:rgba(245,158,11,0.12);color:var(--accent-pending)}
+.history-status.active{background:rgba(16,185,129,0.12);color:var(--accent-active)}
+.history-status.expired{background:rgba(239,68,68,0.1);color:var(--accent-expired)}
+.empty-state{text-align:center;padding:24px 0;color:var(--text-muted);font-family:'DM Mono',monospace;font-size:12px}
+
+.login-gate{text-align:center}
+.login-gate .form-group{max-width:300px;margin:0 auto}
+.login-input-row{display:flex;gap:10px;margin-top:8px}
+.login-btn{padding:10px 24px;border:none;border-radius:10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:13px;font-weight:500;letter-spacing:0.06em;text-transform:uppercase;background:linear-gradient(135deg,#10b981,#3b82f6);color:#fff;transition:all 0.3s;white-space:nowrap}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(16,185,129,0.25)}
+.login-error{margin-top:10px;font-family:'DM Mono',monospace;font-size:11px;color:var(--accent-expired);display:none}
+.login-error.show{display:block}
+.admin-panel{display:none}
+.admin-panel.show{display:block}
+.admin-footer{margin-top:16px;text-align:center;font-family:'DM Mono',monospace;font-size:10px;color:#475569;letter-spacing:0.06em}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@media(max-width:480px){.form-grid{grid-template-columns:1fr}.admin-section{padding:20px}.login-input-row{flex-direction:column}.login-btn{width:100%;text-align:center}}
+</style>
+</head>
+<body>
+<div class="admin-container">
+  <div class="admin-header">
+    <div class="admin-logo">🛡️</div>
+    <div class="admin-title">Pass Issuer</div>
+    <div class="admin-subtitle">Zhenghua Secondary School</div>
+  </div>
+  <div class="admin-card">
+    <div class="admin-section login-gate" id="loginGate">
+      <div class="section-title"><span>🔐</span> Authorised Access Only</div>
+      <p style="color:var(--text-muted);font-size:13px;margin-bottom:16px;">Enter the admin token to access the pass issuer.</p>
+      <div class="form-group">
+        <div class="login-input-row">
+          <input type="password" class="form-input" id="adminToken" placeholder="Admin token" autocomplete="off">
+          <button class="login-btn" onclick="adminLogin()">Enter</button>
+        </div>
+        <div class="login-error" id="loginError">❌ Invalid admin token.</div>
+      </div>
+    </div>
+    <div class="admin-panel" id="adminPanel">
+      <div class="admin-section">
+        <div class="section-title"><span>📋</span> Pass Details</div>
+        <div class="form-grid">
+          <div class="form-group"><label class="form-label">Class</label><input type="text" class="form-input" id="fClass" placeholder="e.g. 2CD"></div>
+          <div class="form-group"><label class="form-label">Subject</label><input type="text" class="form-input" id="fSubject" placeholder="e.g. English Language"></div>
+          <div class="form-group full"><label class="form-label">Purpose</label><input type="text" class="form-input" id="fPurpose" placeholder="e.g. Filming for WA1 Project Video"></div>
+          <div class="form-group full"><label class="form-label">Scope</label>
+            <select class="form-select" id="fScope">
+              <option value="Within school compound only">Within school compound only</option>
+              <option value="Classroom only">Classroom only</option>
+              <option value="Designated areas only">Designated areas only</option>
+              <option value="School hall">School hall</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="section-title"><span>📅</span> Date & Time</div>
+        <div class="form-grid">
+          <div class="form-group full"><label class="form-label">Date</label><input type="date" class="form-input" id="fDate"></div>
+          <div class="form-group"><label class="form-label">Start Time</label><input type="time" class="form-input" id="fStart" value="08:00"></div>
+          <div class="form-group"><label class="form-label">End Time</label><input type="time" class="form-input" id="fEnd" value="09:00"></div>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="section-title"><span>👤</span> Authorisation</div>
+        <div class="form-grid">
+          <div class="form-group full"><label class="form-label">Issuing Teacher</label><input type="text" class="form-input" id="fTeacher" placeholder="e.g. Mr Godwin"></div>
+        </div>
+      </div>
+      <div class="admin-section">
+        <button class="generate-btn" onclick="generatePass()">🎫 Generate Access Pass Link</button>
+        <div class="output-area" id="outputArea">
+          <div class="output-success">
+            <div class="output-success-icon">✅</div>
+            <div class="output-success-text">Pass Generated</div>
+            <div class="output-passid" id="outputPassId"></div>
+          </div>
+          <div class="output-link-box">
+            <div class="output-link" id="outputLink"></div>
+            <button class="copy-btn" id="copyBtn" onclick="copyLink()">Copy</button>
+          </div>
+          <button class="output-preview-btn" onclick="previewPass()">🔍 Preview Pass</button>
+          <div class="output-hint">Copy the link above and share via<br><strong>Google Classroom, WhatsApp, or email</strong>.</div>
+        </div>
+      </div>
+      <div class="admin-section">
+        <div class="history-header">
+          <div class="section-title" style="margin-bottom:0"><span>📜</span> Issued Passes</div>
+          <button class="clear-btn" onclick="clearHistory()">Clear All</button>
+        </div>
+        <div id="historyList" style="margin-top:12px"><div class="empty-state">No passes issued yet.</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="admin-footer">ZHSS Pass Issuer v1.0 — For authorised staff only</div>
+</div>
+<script>
+const ADMIN_TOKEN='Zss2026';
+const STORAGE_KEY='zhss_issued_passes';
+
+function pad(n){return String(n).padStart(2,'0')}
+function getSGT(){return new Date(Date.now()+(new Date().getTimezoneOffset()*60000)+(8*3600000))}
+
+// Load saved passes from localStorage
+let issuedPasses=[];
+try{
+  const saved=localStorage.getItem(STORAGE_KEY);
+  if(saved)issuedPasses=JSON.parse(saved);
+}catch(e){issuedPasses=[]}
+
+function savePasses(){
+  try{localStorage.setItem(STORAGE_KEY,JSON.stringify(issuedPasses))}catch(e){}
+}
+
+// Set default date
+const sgt=getSGT();
+document.getElementById('fDate').value=sgt.getFullYear()+'-'+pad(sgt.getMonth()+1)+'-'+pad(sgt.getDate());
+
+function adminLogin(){
+  if(document.getElementById('adminToken').value.trim()===ADMIN_TOKEN){
+    document.getElementById('loginGate').style.display='none';
+    document.getElementById('adminPanel').classList.add('show');
+    renderHistory();
+  }else{
+    document.getElementById('loginError').classList.add('show');
+    var inp=document.getElementById('adminToken');
+    inp.style.animation='none';inp.offsetHeight;inp.style.animation='shake 0.4s ease';
+  }
+}
+document.getElementById('adminToken').addEventListener('keydown',function(e){if(e.key==='Enter')adminLogin()});
+
+function generatePass(){
+  var cls=document.getElementById('fClass').value.trim();
+  var subject=document.getElementById('fSubject').value.trim();
+  var purpose=document.getElementById('fPurpose').value.trim();
+  var scope=document.getElementById('fScope').value;
+  var date=document.getElementById('fDate').value;
+  var start=document.getElementById('fStart').value;
+  var end=document.getElementById('fEnd').value;
+  var teacher=document.getElementById('fTeacher').value.trim();
+  if(!cls||!subject||!purpose||!date||!start||!end||!teacher){alert('Please fill in all fields.');return}
+
+  var idSuffix=Math.random().toString(36).substring(2,6).toUpperCase();
+  var dateClean=date.split('-').join('');
+  var clsClean=cls.split(' ').join('');
+  var passId='PASS-ZHSS-'+clsClean+'-'+dateClean+'-'+idSuffix;
+  var s=getSGT();
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var issued=s.getDate()+' '+months[s.getMonth()]+' '+s.getFullYear();
+
+  var data={cls:cls,subject:subject,purpose:purpose,scope:scope,date:date,start:start,end:end,teacher:teacher,passId:passId,issued:issued};
+  var encoded=btoa(JSON.stringify(data));
+
+  var base=window.location.href.substring(0,window.location.href.lastIndexOf('/')+1);
+  var url=base+'pass.html#'+encoded;
+
+  document.getElementById('outputLink').textContent=url;
+  document.getElementById('outputLink').setAttribute('data-url',url);
+  document.getElementById('outputPassId').textContent=passId;
+  document.getElementById('outputArea').classList.add('show');
+  document.getElementById('copyBtn').textContent='Copy';
+  document.getElementById('copyBtn').classList.remove('copied');
+
+  issuedPasses.unshift({cls:cls,subject:subject,date:date,start:start,end:end,teacher:teacher,passId:passId,url:url,created:Date.now()});
+  savePasses();
+  renderHistory();
+}
+
+function copyLink(){
+  var url=document.getElementById('outputLink').getAttribute('data-url');
+  navigator.clipboard.writeText(url).then(function(){
+    var b=document.getElementById('copyBtn');b.textContent='✓ Copied';b.classList.add('copied');
+    setTimeout(function(){b.textContent='Copy';b.classList.remove('copied')},2000);
+  }).catch(function(){
+    var ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    var b=document.getElementById('copyBtn');b.textContent='✓ Copied';b.classList.add('copied');
+  });
+}
+
+function copyHistoryLink(btn,url){
+  navigator.clipboard.writeText(url).then(function(){
+    btn.textContent='✓';btn.classList.add('copied');
+    setTimeout(function(){btn.textContent='Copy';btn.classList.remove('copied')},1500);
+  }).catch(function(){
+    var ta=document.createElement('textarea');ta.value=url;document.body.appendChild(ta);
+    ta.select();document.execCommand('copy');document.body.removeChild(ta);
+    btn.textContent='✓';btn.classList.add('copied');
+  });
+}
+
+function previewPass(){window.open(document.getElementById('outputLink').getAttribute('data-url'),'_blank')}
+
+function clearHistory(){
+  if(confirm('Clear all issued pass history?')){
+    issuedPasses=[];savePasses();renderHistory();
+  }
+}
+
+function renderHistory(){
+  var list=document.getElementById('historyList');
+  var months=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  if(!issuedPasses.length){list.innerHTML='<div class="empty-state">No passes issued yet.</div>';return}
+  var html='';
+  for(var i=0;i<issuedPasses.length;i++){
+    var p=issuedPasses[i];
+    var s=new Date(p.date+'T'+p.start+':00+08:00').getTime();
+    var e=new Date(p.date+'T'+p.end+':00+08:00').getTime();
+    var now=Date.now();
+    var sc='pending',st='Pending';
+    if(now>=s&&now<e){sc='active';st='Active'}
+    else if(now>=e){sc='expired';st='Expired'}
+    var dd=new Date(p.date+'T00:00:00');
+    html+='<div class="history-item"><div class="history-info"><div class="history-class">'+p.cls+' — '+p.subject+'</div><div class="history-detail">'+dd.getDate()+' '+months[dd.getMonth()]+' · '+p.start+'–'+p.end+' · '+p.teacher+'</div></div><div class="history-actions"><button class="history-copy" onclick="copyHistoryLink(this,\''+p.url.replace(/'/g,"\\'") +'\')">Copy</button><span class="history-status '+sc+'">'+st+'</span></div></div>';
+  }
+  list.innerHTML=html;
+}
+
+// Update history statuses every 30 seconds
+setInterval(renderHistory,30000);
+</script>
+</body>
+</html>
