@@ -178,7 +178,7 @@ function generatePass(){
   if(!cls||!subject||!purpose||!date||!start||!end||!teacher){alert('Please fill in all fields.');return}
 
   const idSuffix=Math.random().toString(36).substring(2,6).toUpperCase();
-  const passId=`PASS-ZHSS-${cls.replace(/\\s/g,'')}-${date.replace(/-/g,'')}-${idSuffix}`;
+  const passId=`PASS-ZHSS-${cls.replace(/ /g,'')}-${date.replace(/-/g,'')}-${idSuffix}`;
   const s=getSGT();
   const issued=`${s.getDate()} ${['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][s.getMonth()]} ${s.getFullYear()}`;
 
@@ -186,7 +186,7 @@ function generatePass(){
   const encoded=btoa(JSON.stringify(data));
 
   // Build URL relative to current location
-  const base=window.location.href.replace(/\\/[^\\/]*$/,'/');
+  const base=window.location.href.substring(0,window.location.href.lastIndexOf('/')+1);
   const url=base+'pass.html#'+encoded;
 
   document.getElementById('outputLink').textContent=url;
